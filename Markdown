@@ -1,0 +1,15 @@
+# Sistema de Gerenciamento de Tarefas em Python
+
+Este é um projeto simples desenvolvido para demonstração de conceitos de Programação Orientada a Objetos (POO), manipulação de arquivos JSON e organização de código em Python.
+
+## 🚀 Funcionalidades
+- Cadastro e listagem de tarefas
+- Marcação de tarefas como concluídas
+- Persistência de dados em formato JSON
+- Relatório estatístico automatizado
+
+## 🛠️ Como Executar
+1. Certifique-se de ter o Python 3 instalado.
+2. Execute o script principal:
+```bash
+python main.py
