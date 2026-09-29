@@ -1,0 +1,140 @@
+"""
+Projeto: Sistema de Gerenciamento de Tarefas e Análise de Dados
+Descrição: Script em Python para gerenciamento de tarefas, exportação de relatórios
+           e demonstração de boas práticas de programação.
+"""
+
+import json
+import os
+from datetime import datetime
+
+
+class Tarefa:
+    """Classe que representa uma tarefa individual no sistema."""
+
+    def __init__(self, id_tarefa: int, titulo: str, categoria: str, prioridade: str = "Média"):
+        self.id = id_tarefa
+        self.titulo = titulo
+        self.categoria = categoria
+        self.prioridade = prioridade
+        self.concluida = False
+        self.data_criacao = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+    def concluir(self):
+        """Marca a tarefa como concluída."""
+        self.concluida = True
+
+    def para_dict(self) -> dict:
+        """Converte a tarefa em dicionário para salvar em JSON."""
+        return {
+            "id": self.id,
+            "titulo": self.titulo,
+            "categoria": self.categoria,
+            "prioridade": self.prioridade,
+            "concluida": self.concluida,
+            "data_criacao": self.data_criacao
+        }
+
+
+class GerenciadorDeTarefas:
+    """Classe responsável por gerenciar a lista de tarefas e persistência de dados."""
+
+    def __init__(self, arquivo_dados: str = "tarefas.json"):
+        self.arquivo_dados = arquivo_dados
+        self.tarefas = []
+        self._proximo_id = 1
+        self.carregar_dados()
+
+    def adicionar_tarefa(self, titulo: str, categoria: str, prioridade: str = "Média"):
+        """Cria e adiciona uma nova tarefa à lista."""
+        nova_tarefa = Tarefa(self._proximo_id, titulo, categoria, prioridade)
+        self.tarefas.append(nova_tarefa)
+        self._proximo_id += 1
+        self.salvar_dados()
+        print(f"✅ Tarefa '{titulo}' adicionada com sucesso!")
+
+    def listar_tarefas(self, apenas_pendentes: bool = False):
+        """Exibe todas as tarefas cadastradas no console."""
+        print("\n" + "=" * 50)
+        print(" LISTA DE TAREFAS ".center(50, "="))
+        print("=" * 50)
+
+        tarefas_para_exibir = [t for t in self.tarefas if not t.concluida] if apenas_pendentes else self.tarefas
+
+        if not tarefas_para_exibir:
+            print("Nenhuma tarefa encontrada.")
+            return
+
+        for t in tarefas_para_exibir:
+            status = "✔ Concluída" if t.concluida else "⏳ Pendente"
+            print(f"[{t.id}] {t.titulo} | Categoria: {t.categoria} | Prioridade: {t.prioridade} | Status: {status}")
+        print("=" * 50 + "\n")
+
+    def concluir_tarefa(self, id_tarefa: int):
+        """Marca uma tarefa específica como concluída pelo ID."""
+        for t in self.tarefas:
+            if t.id == id_tarefa:
+                t.concluir()
+                self.salvar_dados()
+                print(f"🎉 Tarefa [{id_tarefa}] marcada como concluída!")
+                return
+        print(f"⚠️ Tarefa com ID {id_tarefa} não encontrada.")
+
+    def gerar_relatorio_estatistico(self):
+        """Exibe métricas e estatísticas das tarefas cadastradas."""
+        total = len(self.tarefas)
+        if total == 0:
+            print("Sem dados suficientes para gerar relatório.")
+            return
+
+        concluidas = sum(1 for t in self.tarefas if t.concluida)
+        pendentes = total - concluidas
+        taxa_conclusao = (concluidas / total) * 100
+
+        print("\n📊 RELATÓRIO DO PROJETO")
+        print(f"- Total de Tarefas: {total}")
+        print(f"- Concluídas: {concluidas}")
+        print(f"- Pendentes: {pendentes}")
+        print(f"- Taxa de Conclusão: {taxa_conclusao:.1f}%\n")
+
+    def salvar_dados(self):
+        """Salva a lista de tarefas em um arquivo JSON."""
+        dados = [t.para_dict() for t in self.tarefas]
+        with open(self.arquivo_dados, "w", encoding="utf-8") as f:
+            json.dump(dados, f, indent=4, ensure_ascii=False)
+
+    def carregar_dados(self):
+        """Carrega os dados salvos do arquivo JSON, se existir."""
+        if os.path.exists(self.arquivo_dados):
+            try:
+                with open(self.arquivo_dados, "r", encoding="utf-8") as f:
+                    dados = json.load(f)
+                    for item in dados:
+                        t = Tarefa(item["id"], item["titulo"], item["categoria"], item["prioridade"])
+                        t.concluida = item["concluida"]
+                        t.data_criacao = item["data_criacao"]
+                        self.tarefas.append(t)
+                    if self.tarefas:
+                        self._proximo_id = max(t.id for t in self.tarefas) + 1
+            except Exception as e:
+                print(f"Erro ao carregar dados: {e}")
+
+
+def executar_demonstracao():
+    """Função principal para demonstrar o funcionamento do sistema."""
+    app = GerenciadorDeTarefas()
+
+    # Adicionando tarefas de exemplo se a lista estiver vazia
+    if not app.tarefas:
+        app.adicionar_tarefa("Configurar repositório Git", "Desenvolvimento", "Alta")
+        app.adicionar_tarefa("Escrever arquivo README.md", "Documentação", "Média")
+        app.adicionar_tarefa("Criar testes unitários", "Testes", "Baixa")
+
+    # Executando operações no sistema
+    app.listar_tarefas()
+    app.concluir_tarefa(1)
+    app.gerar_relatorio_estatistico()
+
+
+if __name__ == "__main__":
+    executar_demonstracao()
